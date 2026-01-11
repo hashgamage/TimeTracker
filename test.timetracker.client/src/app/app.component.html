@@ -1,24 +1,99 @@
-﻿<h1 id="tableLabel">Weather forecast</h1>
+﻿@if (statusMessage) {
+  <div class="container mt-3">
+    <div class="alert alert-{{statusMessage.type}} alert-dismissible fade show shadow-sm" role="alert">
+      {{ statusMessage.text }}
+      <button type="button" class="btn-close" (click)="statusMessage = null"></button>
+    </div>
+  </div>
+}
 
-<p>This component demonstrates fetching data from the server.</p>
+@if (isLoading) {
+  <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading application...</span>
+    </div>
+  </div>
+} @else {
+  <div class="container mt-4">
+    <h2 class="mb-3 fw-bold">Time Entry</h2>
 
-<p *ngIf="!forecasts"><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationangular">https://aka.ms/jspsintegrationangular</a> for more details.</em></p>
+    <form [formGroup]="timeEntryForm" (ngSubmit)="onSubmit()" class="row g-3 align-items-end">
+      
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Person</label>
+        <select class="form-select border-primary-subtle" formControlName="personId" 
+                [class.is-invalid]="timeEntryForm.get('personId')?.touched && timeEntryForm.get('personId')?.invalid">
+          <option value="" disabled selected>Select person</option>
+          <option  *ngFor="let p of people" [value]="p.id" style="color: black;">{{ p.name }}</option>
+        </select>
+      </div>
 
-<table *ngIf="forecasts">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Temp. (C)</th>
-            <th>Temp. (F)</th>
-            <th>Summary</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let forecast of forecasts">
-            <td>{{ forecast.date }}</td>
-            <td>{{ forecast.temperatureC }}</td>
-            <td>{{ forecast.temperatureF }}</td>
-            <td>{{ forecast.summary }}</td>
-        </tr>
-    </tbody>
-</table>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Task</label>
+        <select class="form-select border-primary-subtle" formControlName="taskId"
+                [class.is-invalid]="timeEntryForm.get('taskId')?.touched && timeEntryForm.get('taskId')?.invalid">
+          <option value="" disabled selected>Select task</option>
+          <option *ngFor="let t of tasks" [value]="t.id">{{ t.taskName }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Date & Time</label>
+        <input type="datetime-local" class="form-control border-primary-subtle" formControlName="dateTimeEntry"
+               [class.is-invalid]="timeEntryForm.get('dateTimeEntry')?.touched && timeEntryForm.get('dateTimeEntry')?.invalid" />
+      </div>
+
+      <div class="col-12 mt-3">
+        <button type="submit" class="btn btn-primary px-4 shadow-sm" [disabled]="timeEntryForm.invalid">
+          {{ isEditMode ? 'Update' : 'Save' }}
+        </button>
+       
+          <button type="button" class="btn btn-outline-secondary ms-2" (click)="resetForm()">Cancel</button>
+        
+      </div>
+    </form>
+
+    <hr class="my-5" />
+
+    <h3 class="mb-3 fw-bold">Existing Entries</h3>
+    <div class="table-responsive rounded shadow-sm">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="ps-3">Person</th>
+            <th>Task</th>
+            <th>Date & Time</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of timeEntries; track e.id) {
+            <tr>
+              <td class="ps-3">{{ e.personName }}</td>
+              <td>
+                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-3">
+                  {{ e.taskName }}
+                </span>
+              </td>
+              <td class="text-muted">{{ e.dateAndTime | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-end pe-3">
+                <button class="btn btn-sm btn-outline-primary me-2" (click)="onEdit(e)">
+                  Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="onDelete(e.id)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="text-center text-muted py-5">
+                No time entries found. Seed data: Anton, John.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
