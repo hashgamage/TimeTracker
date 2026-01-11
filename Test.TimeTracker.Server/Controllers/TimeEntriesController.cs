@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Test.TimeTracker.Server.Data;
 using Test.TimeTracker.Server.DTOs;
 using Test.TimeTracker.Server.Models;
@@ -20,7 +21,18 @@ namespace Test.TimeTracker.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllTimeEntries()
         {
-            var entries = await _unitOfWork.TimeEntries.GetAllAsync();
+            var entries = await _unitOfWork.TimeEntries
+                .GetQueryable()
+                .Select(x => new TimeEntryResponseDto
+                {
+                     Id= x.Id,
+                     PersonId= x.PersonId,
+                     PersonName = x.Person.FullName,
+                     TaskId= x.TaskId,
+                     TaskName=x.Task.Name,
+                     DateAndTime=x.DateTimeEntry,
+
+                }).ToListAsync();
             return Ok(entries);
         }
 
@@ -40,7 +52,7 @@ namespace Test.TimeTracker.Server.Controllers
             return Ok(entry);
         }
 
-        [HttpPut("id")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEntry(int id,[FromBody] TimeEntryCreateDto dto)
         {
             var existingEntry = await _unitOfWork.TimeEntries.GetByIdAsync(id);
@@ -58,14 +70,14 @@ namespace Test.TimeTracker.Server.Controllers
             return NoContent();
         }
 
-        [HttpDelete("id")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEntry(int id)
         {
             var existingEntry = await _unitOfWork.TimeEntries.GetByIdAsync(id);
             if (existingEntry == null)
                 return NotFound();
 
-            _unitOfWork.TimeEntries.Delete(id);
+           await _unitOfWork.TimeEntries.DeleteAsync(id);
             await _unitOfWork.CompleteAsync();
             return NoContent();
         }

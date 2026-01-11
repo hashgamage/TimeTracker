@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Test.TimeTracker.Server.Data;
+using Test.TimeTracker.Server.DTOs;
 
 namespace Test.TimeTracker.Server.Controllers
 {
@@ -18,7 +20,15 @@ namespace Test.TimeTracker.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPeople()
         {
-            var people = await _unitOfWork.People.GetAllAsync();
+            var people = await _unitOfWork.People
+             .GetQueryable()
+             .Select(p => new PersonResponseDto
+             {
+                 Id=p.Id,
+                 Name=p.FullName
+
+             }).ToListAsync();
+
             return Ok(people);
         }
     }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Test.TimeTracker.Server.Data;
+using Test.TimeTracker.Server.DTOs;
 
 namespace Test.TimeTracker.Server.Controllers
 {
@@ -19,7 +21,16 @@ namespace Test.TimeTracker.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTasks()
         {
-            var tasks = await _unitOfWork.Tasks.GetAllAsync();
+            var tasks = await _unitOfWork.Tasks
+            .GetQueryable()
+            .Select(p => new TaskResponseDto
+            { 
+                Id = p.Id,
+                TaskName = p.Name,
+                Description =p.Description,
+                
+            })
+            .ToListAsync();
             return Ok(tasks);
         }
     }
